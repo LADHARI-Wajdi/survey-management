@@ -21,7 +21,7 @@ import { IAnswerOption } from 'src/answer-options/types/interfaces/answer-option
 @Entity()
 export class Survey implements ISurvey {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+    id: string;
 
   @CreateDateColumn()
   createdAt: Date;

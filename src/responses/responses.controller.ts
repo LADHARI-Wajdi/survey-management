@@ -21,6 +21,8 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { Response } from './entities/response.entity';
+import { Roles } from 'src/auth/decorator/roles.decorator';
+import { UserRole } from 'src/user/types/enums/user-role.enum';
 
 @ApiTags('responses')
 @Controller('responses')
@@ -30,6 +32,8 @@ export class ResponsesController {
   @ApiOperation({})
   @ApiResponse({ status: 201, type: Response })
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.INVESTIGATOR,UserRole.PARTICIPANT) 
+  
   create(@Body() createResponseDto: CreateResponseDto) {
     return this.responsesService.create(createResponseDto);
   }
@@ -39,6 +43,8 @@ export class ResponsesController {
   @ApiQuery({ name: 'questionId', required: false })
   @ApiQuery({ name: 'userId', required: false })
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.INVESTIGATOR,UserRole.PARTICIPANT) 
+
   findAll(
     @Query('questionId') questionId?: string,
     @Query('userId') userId?: string,
@@ -55,6 +61,8 @@ export class ResponsesController {
   @ApiResponse({ status: 200, type: Response })
   @ApiResponse({ status: 404 })
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.INVESTIGATOR,UserRole.PARTICIPANT) 
+
   findOne(@Param('id') id: string) {
     return this.responsesService.findOne(id);
   }
@@ -65,6 +73,8 @@ export class ResponsesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.INVESTIGATOR,UserRole.PARTICIPANT) 
+
   update(
     @Param('id') id: string,
     @Body() updateResponseDto: UpdateResponseDto,
@@ -76,6 +86,8 @@ export class ResponsesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
+  @Roles(UserRole.ADMIN, UserRole.INVESTIGATOR,UserRole.PARTICIPANT) 
+
   remove(@Param('id') id: string) {
     return this.responsesService.remove(id);
   }

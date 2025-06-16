@@ -1,3 +1,4 @@
+// src/analytics/entities/analytics.entity.ts
 import {
   Column,
   CreateDateColumn,
@@ -34,4 +35,14 @@ export class Analytics {
 
   @Column({ nullable: true, default: 0 })
   averageCompletionTime: number;
+
+  @Column({ type: 'json', nullable: true })
+  exportPaths: {
+    csv?: string;
+    excel?: string;
+    pdf?: string;
+  };
+
+  @Column({ type: 'json', nullable: true })
+  visualizationData: Record<string, any>;
 }

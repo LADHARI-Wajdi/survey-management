@@ -34,4 +34,6 @@ export class RegisterDto {
   @IsBoolean()
   @IsOptional()
   admin?: boolean;
+  resetToken?: string;
+  resetTokenExpiry?: Date;
 }

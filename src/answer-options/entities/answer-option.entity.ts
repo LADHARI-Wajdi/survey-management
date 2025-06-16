@@ -27,6 +27,9 @@ export class AnswerOption implements IAnswerOption {
   @Column()
   value: string;
 
+  @Column()
+  text: string;
+
   @ManyToOne(() => Question, (question) => question.answerOptions)
   question: IQuestion | string;
 

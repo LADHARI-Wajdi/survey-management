@@ -1,4 +1,5 @@
 import {
+  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -12,7 +13,8 @@ import { ISurvey } from 'src/surveys/types/interfaces/survey.interface';
 import { Response } from 'src/responses/entities/response.entity';
 import { IResponse } from 'src/responses/types/interfaces/response.interface';
 import { UserRole } from '../types/enums/user-role.enum';
-
+import { genSalt ,hash} from 'bcrypt';
+ 
 @Entity()
 export class User implements IUser {
   @PrimaryGeneratedColumn('uuid')
@@ -39,6 +41,8 @@ export class User implements IUser {
     default: UserRole.PARTICIPANT,
   })
   role: UserRole;
+
+
 
   @Column({ default: false })
   admin: boolean;

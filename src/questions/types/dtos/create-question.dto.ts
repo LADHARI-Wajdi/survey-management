@@ -6,14 +6,35 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  IsArray,
+  ValidateNested,
+  IsNumber,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { QuestionType } from '../enums/question-type.enum';
+
+export class CreateAnswerOptionDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  text: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  value?: string;
+}
 
 export class CreateQuestionDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
   text: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  description?: string;
 
   @ApiPropertyOptional()
   @IsEnum(QuestionType)
@@ -25,8 +46,20 @@ export class CreateQuestionDto {
   @IsOptional()
   isRequired?: boolean;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateAnswerOptionDto)
+  @IsOptional()
+  options?: CreateAnswerOptionDto[];
+
+  @ApiPropertyOptional()
   @IsUUID()
-  @IsNotEmpty()
-  survey: string;
+  @IsOptional()
+  survey?: string;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  order?: number;
 }

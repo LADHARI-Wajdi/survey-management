@@ -41,8 +41,9 @@ export class CreateSurveyDto {
   @IsOptional()
   endDate?: Date;
 
-  @ApiProperty()
-  @IsUUID()
-  @IsNotEmpty()
-  createdBy: string;
+  // @ApiProperty()
+  // @IsString()
+  // @IsNotEmpty()
+  
+  // createdBy: string;
 }

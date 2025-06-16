@@ -31,6 +31,12 @@ export class Question implements IQuestion {
   @Column()
   text: string;
 
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ nullable: true })
+  order: number;
+
   @Column({
     type: 'enum',
     enum: QuestionType,

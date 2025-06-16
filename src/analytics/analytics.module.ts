@@ -6,6 +6,7 @@ import { AnalyticsController } from './analytics.controller';
 import { SurveyModule } from 'src/surveys/surveys.module';
 import { QuestionModule } from 'src/questions/questions.module';
 import { ResponseModule } from 'src/responses/responses.module';
+import { UserModule } from 'src/user/user.module'; // Ajoutez cette ligne
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ResponseModule } from 'src/responses/responses.module';
     SurveyModule,
     QuestionModule,
     ResponseModule,
+    UserModule, // Ajoutez cette ligne
   ],
   controllers: [AnalyticsController],
   providers: [AnalyticsService],
