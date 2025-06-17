@@ -100,6 +100,19 @@ export class InvitationController {
     return this.invitationService.markAsCompleted(token);
   }
 
+  @ApiOperation({ summary: 'Get invitation statistics for a survey' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return invitation statistics for the survey.',
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('surveys/:id/statistics')
+  @Roles(UserRole.ADMIN, UserRole.INVESTIGATOR) 
+  getInvitationStatistics(@Param('id') id: string) {
+    return this.invitationService.getInvitationStatistics(id);
+  }
+
   @ApiOperation({ summary: 'Update invitation status' })
   @ApiResponse({
     status: 200,

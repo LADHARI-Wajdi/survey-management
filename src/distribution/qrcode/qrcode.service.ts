@@ -20,12 +20,14 @@ export class QRCodeService {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    const filePath = path.join(uploadsDir, `${uniqueId}.png`);
-    this.logger.debug(`QR code will be saved to: ${filePath}`);
+    // Use relative path for storage
+    const relativePath = path.join('uploads', 'qrcodes', `${uniqueId}.png`);
+    const absolutePath = path.join(process.cwd(), relativePath);
+    this.logger.debug(`QR code will be saved to: ${absolutePath}`);
 
     try {
       // Generate QR Code
-      await QRCode.toFile(filePath, data, {
+      await QRCode.toFile(absolutePath, data, {
         color: {
           dark: '#000000',
           light: '#ffffff',
@@ -36,14 +38,15 @@ export class QRCodeService {
       });
 
       // Verify file was created
-      if (fs.existsSync(filePath)) {
-        const stats = fs.statSync(filePath);
+      if (fs.existsSync(absolutePath)) {
+        const stats = fs.statSync(absolutePath);
         this.logger.debug(`QR code file created successfully. Size: ${stats.size} bytes`);
       } else {
         this.logger.error('QR code file was not created');
       }
 
-      return filePath;
+      // Return the relative path for storage in the database
+      return relativePath;
     } catch (error) {
       this.logger.error(`Error generating QR code: ${error.message}`);
       throw error;

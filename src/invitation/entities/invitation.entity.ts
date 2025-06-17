@@ -43,6 +43,12 @@ export class Invitation {
   @Column({ nullable: true })
   sentAt: Date;
 
+  @Column({ nullable: true })
+  openDate: Date;
+
+  @Column({ nullable: true })
+  clickDate: Date;
+
   @Column({ default: 0 })
   reminderCount: number;
 

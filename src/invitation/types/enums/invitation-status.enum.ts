@@ -1,7 +1,9 @@
 export enum InvitationStatus {
   PENDING = 'PENDING',
   SENT = 'SENT',
+  OPENED = 'OPENED',
   CLICKED = 'CLICKED',
   COMPLETED = 'COMPLETED',
-  EXPIRED = 'EXPIRED',
+  BOUNCED = 'BOUNCED',
+  FAILED = 'FAILED'
 }

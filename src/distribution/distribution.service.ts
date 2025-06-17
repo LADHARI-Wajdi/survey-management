@@ -130,9 +130,57 @@ export class DistributionService {
 
   async remove(id: string): Promise<void> {
     const result = await this.distributionRepository.delete(id);
-
     if (result.affected === 0) {
       throw new NotFoundException(`Distribution with ID ${id} not found`);
     }
+  }
+
+  async getDistributionStats(surveyId: string): Promise<any> {
+    const distributions = await this.distributionRepository.find({
+      where: { survey: { id: surveyId } },
+      relations: ['survey'],
+    });
+
+    const stats = {
+      totalDistributions: distributions.length,
+      totalViews: distributions.reduce((sum, d) => sum + d.openedCount, 0),
+      totalResponses: distributions.reduce((sum, d) => sum + d.completedCount, 0),
+      conversionRate: 0,
+      qrCodeScans: distributions.filter(d => d.method === DistributionMethod.QR_CODE)
+        .reduce((sum, d) => sum + d.openedCount, 0),
+      byMethod: {
+        [DistributionMethod.LINK]: {
+          distributions: distributions.filter(d => d.method === DistributionMethod.LINK).length,
+          views: distributions.filter(d => d.method === DistributionMethod.LINK)
+            .reduce((sum, d) => sum + d.openedCount, 0),
+          responses: distributions.filter(d => d.method === DistributionMethod.LINK)
+            .reduce((sum, d) => sum + d.completedCount, 0),
+          conversionRate: 0
+        },
+        [DistributionMethod.QR_CODE]: {
+          distributions: distributions.filter(d => d.method === DistributionMethod.QR_CODE).length,
+          views: distributions.filter(d => d.method === DistributionMethod.QR_CODE)
+            .reduce((sum, d) => sum + d.openedCount, 0),
+          responses: distributions.filter(d => d.method === DistributionMethod.QR_CODE)
+            .reduce((sum, d) => sum + d.completedCount, 0),
+          conversionRate: 0
+        }
+      }
+    };
+
+    // Calculate conversion rates
+    if (stats.totalViews > 0) {
+      stats.conversionRate = (stats.totalResponses / stats.totalViews) * 100;
+    }
+    if (stats.byMethod[DistributionMethod.LINK].views > 0) {
+      stats.byMethod[DistributionMethod.LINK].conversionRate = 
+        (stats.byMethod[DistributionMethod.LINK].responses / stats.byMethod[DistributionMethod.LINK].views) * 100;
+    }
+    if (stats.byMethod[DistributionMethod.QR_CODE].views > 0) {
+      stats.byMethod[DistributionMethod.QR_CODE].conversionRate = 
+        (stats.byMethod[DistributionMethod.QR_CODE].responses / stats.byMethod[DistributionMethod.QR_CODE].views) * 100;
+    }
+
+    return stats;
   }
 }

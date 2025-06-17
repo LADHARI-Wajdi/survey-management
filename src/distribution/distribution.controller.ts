@@ -9,6 +9,8 @@ import {
   Query,
   Patch,
   Req,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
 import { DistributionService } from './distribution.service';
 import { CreateDistributionDto } from './types/dtos/create-distribution.dto';
@@ -23,6 +25,11 @@ import { Distribution } from './entities/distribution.entity';
 import { Admin } from 'typeorm';
 import { Roles } from 'src/auth/decorator/roles.decorator';
 import { UserRole } from 'src/user/types/enums/user-role.enum';
+import { DistributionMethod } from './types/enums/distribution-method.enum';
+import { Response } from 'express';
+import { createReadStream } from 'fs';
+import { join } from 'path';
+import { existsSync } from 'fs';
 
 @ApiTags('distribution')
 @Controller('distribution')
@@ -115,5 +122,61 @@ export class DistributionController {
   @Roles(UserRole.ADMIN, UserRole.INVESTIGATOR) 
   remove(@Param('id') id: string) {
     return this.distributionService.remove(id);
+  }
+
+  @ApiOperation({ summary: 'Get distribution statistics for a survey' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return distribution statistics for the survey.',
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('stats/:id')
+ @Roles(UserRole.ADMIN, UserRole.INVESTIGATOR) 
+  getDistributionStats(@Param('id') id: string) {
+    return this.distributionService.getDistributionStats(id);
+  }
+
+  @ApiOperation({ summary: 'Generate a survey distribution link' })
+  @ApiResponse({
+    status: 201,
+    description: 'The distribution link has been successfully created.',
+    type: Distribution,
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('link')
+  @Roles(UserRole.ADMIN, UserRole.INVESTIGATOR) 
+  generateLink(@Body() createDistributionDto: CreateDistributionDto, @Req() req) {
+    const userId = req.user.userId;
+    return this.distributionService.create({
+      ...createDistributionDto,
+      method: DistributionMethod.LINK
+    }, userId);
+  }
+
+  @ApiOperation({ summary: 'Get QR code image' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the QR code image',
+  })
+  @Get(':id/qrcode/image')
+  async getQRCodeImage(@Param('id') id: string, @Res({ passthrough: true }) res: Response) {
+    const distribution = await this.distributionService.findOne(id);
+    if (!distribution.qrCodePath) {
+      throw new Error('QR code not found');
+    }
+
+    const filePath = join(process.cwd(), distribution.qrCodePath);
+    if (!existsSync(filePath)) {
+      throw new Error('QR code file not found');
+    }
+
+    const file = createReadStream(filePath);
+    res.set({
+      'Content-Type': 'image/png',
+      'Content-Disposition': `inline; filename="qrcode-${id}.png"`,
+    });
+    return new StreamableFile(file);
   }
 }

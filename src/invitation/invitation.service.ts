@@ -109,21 +109,27 @@ export class InvitationService {
   }
 
   async trackInvitationClick(token: string): Promise<Invitation> {
-    const invitation = await this.findByToken(token);
+    const invitation = await this.validateToken(token);
 
-    // Vérifier si l'invitation n'a pas expiré
     if (invitation.expiresAt && invitation.expiresAt < new Date()) {
-      invitation.status = InvitationStatus.EXPIRED;
+      invitation.status = InvitationStatus.FAILED;
       await this.invitationRepository.save(invitation);
-      throw new Error('This invitation has expired');
+      throw new NotFoundException('Invitation has expired');
     }
 
     invitation.status = InvitationStatus.CLICKED;
+    invitation.clickDate = new Date();
     return this.invitationRepository.save(invitation);
   }
 
   async markAsCompleted(token: string): Promise<Invitation> {
-    const invitation = await this.findByToken(token);
+    const invitation = await this.invitationRepository.findOne({
+      where: { token },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException(`Invitation with token ${token} not found`);
+    }
 
     invitation.status = InvitationStatus.COMPLETED;
     invitation.completedAt = new Date();
@@ -148,5 +154,90 @@ export class InvitationService {
     if (result.affected === 0) {
       throw new NotFoundException(`Invitation with ID ${id} not found`);
     }
+  }
+
+  async getInvitationStatistics(surveyId: string): Promise<any> {
+    const invitations = await this.invitationRepository.find({
+      where: { survey: { id: surveyId } },
+      relations: ['survey'],
+    });
+
+    const stats = {
+      sentCount: invitations.length,
+      openCount: invitations.filter(i => i.status === InvitationStatus.OPENED || i.status === InvitationStatus.COMPLETED).length,
+      clickCount: invitations.filter(i => i.status === InvitationStatus.CLICKED || i.status === InvitationStatus.COMPLETED).length,
+      completeCount: invitations.filter(i => i.status === InvitationStatus.COMPLETED).length,
+      openRate: 0,
+      clickRate: 0,
+      completionRate: 0,
+      averageTimeToOpen: 0,
+      averageTimeToClick: 0,
+      averageTimeToComplete: 0,
+      bounceRate: 0,
+      failureRate: 0
+    };
+
+    // Calculate rates
+    if (stats.sentCount > 0) {
+      stats.openRate = (stats.openCount / stats.sentCount) * 100;
+      stats.clickRate = (stats.clickCount / stats.sentCount) * 100;
+      stats.completionRate = (stats.completeCount / stats.sentCount) * 100;
+    }
+
+    // Calculate average times
+    const openedInvitations = invitations.filter(i => i.openDate);
+    const clickedInvitations = invitations.filter(i => i.clickDate);
+    const completedInvitations = invitations.filter(i => i.completedAt);
+
+    if (openedInvitations.length > 0) {
+      stats.averageTimeToOpen = openedInvitations.reduce((sum, i) => {
+        const timeToOpen = i.openDate.getTime() - i.sentAt.getTime();
+        return sum + timeToOpen;
+      }, 0) / openedInvitations.length / (1000 * 60); // Convert to minutes
+    }
+
+    if (clickedInvitations.length > 0) {
+      stats.averageTimeToClick = clickedInvitations.reduce((sum, i) => {
+        const timeToClick = i.clickDate.getTime() - i.sentAt.getTime();
+        return sum + timeToClick;
+      }, 0) / clickedInvitations.length / (1000 * 60); // Convert to minutes
+    }
+
+    if (completedInvitations.length > 0) {
+      stats.averageTimeToComplete = completedInvitations.reduce((sum, i) => {
+        const timeToComplete = i.completedAt.getTime() - i.sentAt.getTime();
+        return sum + timeToComplete;
+      }, 0) / completedInvitations.length / (1000 * 60); // Convert to minutes
+    }
+
+    // Calculate bounce and failure rates
+    const bouncedInvitations = invitations.filter(i => i.status === InvitationStatus.BOUNCED);
+    const failedInvitations = invitations.filter(i => i.status === InvitationStatus.FAILED);
+
+    if (stats.sentCount > 0) {
+      stats.bounceRate = (bouncedInvitations.length / stats.sentCount) * 100;
+      stats.failureRate = (failedInvitations.length / stats.sentCount) * 100;
+    }
+
+    return stats;
+  }
+
+  async validateToken(token: string): Promise<Invitation> {
+    const invitation = await this.invitationRepository.findOne({
+      where: { token },
+      relations: ['survey'],
+    });
+
+    if (!invitation) {
+      throw new NotFoundException(`Invitation with token ${token} not found`);
+    }
+
+    if (invitation.expiresAt && invitation.expiresAt < new Date()) {
+      invitation.status = InvitationStatus.FAILED;
+      await this.invitationRepository.save(invitation);
+      throw new Error('This invitation has expired');
+    }
+
+    return invitation;
   }
 }
